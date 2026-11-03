@@ -1,16 +1,3 @@
-/*
- * SMART ELECTRICITY CONSUMPTION ANALYZER
- * LTPS Project - Single C source file
- *
- * Compile: gcc smart_electricity.c -o smart_electricity
- * Run:     ./smart_electricity
- *
- * Appliance records are saved automatically in appliances.dat.
- * Tariff rates below are illustrative; change them to match your
- * electricity provider's current rates. Fixed charges and taxes
- * are not included in the estimated bill.
- */
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -19,7 +6,6 @@
 #define DATA_FILE "appliances.dat"
 #define DAYS_IN_MONTH 30
 
-/* Illustrative progressive energy tariff (INR per unit/kWh). */
 #define RATE_1 3.00
 #define RATE_2 5.00
 #define RATE_3 7.00
@@ -35,7 +21,6 @@ typedef struct {
 Appliance appliances[MAX_APPLIANCES];
 int applianceCount = 0;
 
-/* Read a line safely, including names containing spaces. */
 void readLine(const char *prompt, char *buffer, int size) {
     int ch;
     printf("%s", prompt);
@@ -47,11 +32,8 @@ void readLine(const char *prompt, char *buffer, int size) {
 
     buffer[strcspn(buffer, "\n")] = '\0';
 
-    /* Clear any extra characters if the input was longer than the buffer. */
     if (strchr(buffer, '\0') == buffer + size - 1) {
-        while ((ch = getchar()) != '\n' && ch != EOF) {
-            /* discard */
-        }
+        while ((ch = getchar()) != '\n' && ch != EOF) {}
     }
 }
 
@@ -68,13 +50,11 @@ double readDouble(const char *prompt, double minValue, double maxValue) {
             end++;
         }
 
-        if (line[0] != '\0' && end != line && *end == '\0' &&
-            value >= minValue && value <= maxValue) {
+        if (line[0] != '\0' && end != line && *end == '\0' && value >= minValue && value <= maxValue) {
             return value;
         }
 
-        printf("Invalid input. Enter a value from %.2f to %.2f.\n",
-               minValue, maxValue);
+        printf("Invalid input. Enter a value from %.2f to %.2f.\n", minValue, maxValue);
     }
 }
 
@@ -91,19 +71,16 @@ int readInt(const char *prompt, int minValue, int maxValue) {
             end++;
         }
 
-        if (line[0] != '\0' && end != line && *end == '\0' &&
-            value >= minValue && value <= maxValue) {
+        if (line[0] != '\0' && end != line && *end == '\0' && value >= minValue && value <= maxValue) {
             return (int)value;
         }
 
-        printf("Invalid input. Enter a whole number from %d to %d.\n",
-               minValue, maxValue);
+        printf("Invalid input. Enter a whole number from %d to %d.\n", minValue, maxValue);
     }
 }
 
 void saveData(void) {
     FILE *fp = fopen(DATA_FILE, "wb");
-
     if (fp == NULL) {
         printf("Warning: Could not save appliance records.\n");
         return;
@@ -118,17 +95,13 @@ void loadData(void) {
     FILE *fp = fopen(DATA_FILE, "rb");
     int count;
 
-    if (fp == NULL) {
-        return; /* First run: no saved records yet. */
-    }
+    if (fp == NULL) return;
 
-    if (fread(&count, sizeof(int), 1, fp) == 1 &&
-        count >= 0 && count <= MAX_APPLIANCES) {
+    if (fread(&count, sizeof(int), 1, fp) == 1 && count >= 0 && count <= MAX_APPLIANCES) {
         if (fread(appliances, sizeof(Appliance), count, fp) == (size_t)count) {
             applianceCount = count;
         }
     }
-
     fclose(fp);
 }
 
@@ -142,9 +115,7 @@ double monthlyUnits(const Appliance *a) {
 
 double totalDailyUnits(void) {
     double total = 0.0;
-    int i;
-
-    for (i = 0; i < applianceCount; i++) {
+    for (int i = 0; i < applianceCount; i++) {
         total += dailyUnits(&appliances[i]);
     }
     return total;
@@ -154,38 +125,30 @@ double totalMonthlyUnits(void) {
     return totalDailyUnits() * DAYS_IN_MONTH;
 }
 
-/* Progressive bill estimate. This is an illustrative slab structure. */
 double calculateBill(double units) {
     double bill = 0.0;
 
     if (units <= 100.0) {
         bill = units * RATE_1;
     } else if (units <= 200.0) {
-        bill = (100.0 * RATE_1) +
-               ((units - 100.0) * RATE_2);
+        bill = (100.0 * RATE_1) + ((units - 100.0) * RATE_2);
     } else if (units <= 500.0) {
-        bill = (100.0 * RATE_1) +
-               (100.0 * RATE_2) +
-               ((units - 200.0) * RATE_3);
+        bill = (100.0 * RATE_1) + (100.0 * RATE_2) + ((units - 200.0) * RATE_3);
     } else {
-        bill = (100.0 * RATE_1) +
-               (100.0 * RATE_2) +
-               (300.0 * RATE_3) +
-               ((units - 500.0) * RATE_4);
+        bill = (100.0 * RATE_1) + (100.0 * RATE_2) + (300.0 * RATE_3) + ((units - 500.0) * RATE_4);
     }
 
     return bill;
 }
 
 void addAppliance(void) {
-    Appliance a;
-
     if (applianceCount >= MAX_APPLIANCES) {
-        printf("\nAppliance limit reached. Maximum: %d\n", MAX_APPLIANCES);
+        printf("\nAppliance limit reached (Maximum: %d).\n", MAX_APPLIANCES);
         return;
     }
 
-    printf("\n========== ADD APPLIANCE ==========\n");
+    Appliance a;
+    printf("\n--- Add Appliance ---\n");
     readLine("Enter appliance name: ", a.name, sizeof(a.name));
 
     if (strlen(a.name) == 0) {
@@ -194,31 +157,25 @@ void addAppliance(void) {
     }
 
     a.powerWatts = readDouble("Power rating (watts): ", 1.0, 100000.0);
-    a.hoursPerDay = readDouble("Average daily usage (0-24 hours): ", 0.0, 24.0);
-    a.quantity = readInt("Number of identical appliances: ", 1, 100);
+    a.hoursPerDay = readDouble("Average daily usage (hours): ", 0.0, 24.0);
+    a.quantity = readInt("Quantity: ", 1, 100);
 
     appliances[applianceCount++] = a;
     saveData();
-
-    printf("\nAppliance added and saved successfully!\n");
+    printf("\nAppliance added successfully.\n");
 }
 
 void viewAppliances(void) {
-    int i;
-
-    printf("\n================ APPLIANCE LIST ================\n");
-
+    printf("\n--- Appliance List ---\n");
     if (applianceCount == 0) {
         printf("No appliances added yet.\n");
         return;
     }
 
-    printf("%-4s %-22s %10s %10s %8s %12s\n",
-           "No.", "Appliance", "Watts", "Hours/day",
-           "Quantity", "Units/day");
+    printf("%-4s %-22s %10s %10s %8s %12s\n", "No.", "Appliance", "Watts", "Hours/day", "Quantity", "Units/day");
     printf("--------------------------------------------------------------------------\n");
 
-    for (i = 0; i < applianceCount; i++) {
+    for (int i = 0; i < applianceCount; i++) {
         printf("%-4d %-22.22s %10.2f %10.2f %8d %12.2f\n",
                i + 1, appliances[i].name, appliances[i].powerWatts,
                appliances[i].hoursPerDay, appliances[i].quantity,
@@ -227,17 +184,15 @@ void viewAppliances(void) {
 }
 
 void deleteAppliance(void) {
-    int number, i;
-
     if (applianceCount == 0) {
-        printf("\nThere are no appliances to delete.\n");
+        printf("\nNo appliances to delete.\n");
         return;
     }
 
     viewAppliances();
-    number = readInt("\nEnter appliance number to delete: ", 1, applianceCount);
+    int number = readInt("\nEnter appliance number to delete: ", 1, applianceCount);
 
-    for (i = number - 1; i < applianceCount - 1; i++) {
+    for (int i = number - 1; i < applianceCount - 1; i++) {
         appliances[i] = appliances[i + 1];
     }
 
@@ -247,105 +202,79 @@ void deleteAppliance(void) {
 }
 
 void showConsumption(void) {
-    int i;
-
     if (applianceCount == 0) {
         printf("\nAdd appliances first to calculate consumption.\n");
         return;
     }
 
-    printf("\n=============== ENERGY CONSUMPTION ===============\n");
+    printf("\n--- Energy Consumption ---\n");
     printf("%-22s %12s %14s\n", "Appliance", "Daily (kWh)", "Monthly (kWh)");
     printf("---------------------------------------------------\n");
 
-    for (i = 0; i < applianceCount; i++) {
+    for (int i = 0; i < applianceCount; i++) {
         printf("%-22.22s %12.2f %14.2f\n",
                appliances[i].name, dailyUnits(&appliances[i]),
                monthlyUnits(&appliances[i]));
     }
 
     printf("---------------------------------------------------\n");
-    printf("%-22s %12.2f %14.2f\n",
-           "TOTAL", totalDailyUnits(), totalMonthlyUnits());
-    printf("\nNote: 1 electricity unit = 1 kWh.\n");
+    printf("%-22s %12.2f %14.2f\n", "TOTAL", totalDailyUnits(), totalMonthlyUnits());
 }
 
 void estimateBill(void) {
-    double units, bill;
-
     if (applianceCount == 0) {
         printf("\nAdd appliances first to estimate the bill.\n");
         return;
     }
 
-    units = totalMonthlyUnits();
-    bill = calculateBill(units);
+    double units = totalMonthlyUnits();
+    double bill = calculateBill(units);
 
-    printf("\n=============== MONTHLY BILL ESTIMATE ===============\n");
-    printf("Estimated monthly consumption : %.2f units\n", units);
-    printf("Estimated energy charges      : Rs. %.2f\n", bill);
-    printf("\nIllustrative tariff slabs:\n");
-    printf("  First 100 units : Rs. %.2f/unit\n", RATE_1);
-    printf("  Next 100 units  : Rs. %.2f/unit\n", RATE_2);
-    printf("  Next 300 units  : Rs. %.2f/unit\n", RATE_3);
-    printf("  Above 500 units : Rs. %.2f/unit\n", RATE_4);
-    printf("\nThis estimate excludes fixed charges, taxes and other fees.\n");
+    printf("\n--- Monthly Bill Estimate ---\n");
+    printf("Estimated Monthly Consumption : %.2f units\n", units);
+    printf("Estimated Energy Charges      : Rs. %.2f\n", bill);
 }
 
 void rankAppliances(void) {
-    int order[MAX_APPLIANCES];
-    int i, j, temp;
-
     if (applianceCount == 0) {
         printf("\nNo appliance data available.\n");
         return;
     }
 
-    for (i = 0; i < applianceCount; i++) {
-        order[i] = i;
-    }
+    int order[MAX_APPLIANCES];
+    for (int i = 0; i < applianceCount; i++) order[i] = i;
 
-    /* Selection sort: highest monthly consumption first. */
-    for (i = 0; i < applianceCount - 1; i++) {
-        for (j = i + 1; j < applianceCount; j++) {
-            if (monthlyUnits(&appliances[order[j]]) >
-                monthlyUnits(&appliances[order[i]])) {
-                temp = order[i];
+    for (int i = 0; i < applianceCount - 1; i++) {
+        for (int j = i + 1; j < applianceCount; j++) {
+            if (monthlyUnits(&appliances[order[j]]) > monthlyUnits(&appliances[order[i]])) {
+                int temp = order[i];
                 order[i] = order[j];
                 order[j] = temp;
             }
         }
     }
 
-    printf("\n========== APPLIANCE CONSUMPTION RANKING ==========\n");
-    for (i = 0; i < applianceCount; i++) {
+    printf("\n--- Appliance Consumption Ranking ---\n");
+    for (int i = 0; i < applianceCount; i++) {
         int index = order[i];
-        printf("%d. %-22.22s %8.2f units/month\n",
-               i + 1, appliances[index].name,
-               monthlyUnits(&appliances[index]));
+        printf("%d. %-22.22s %.2f units/month\n", i + 1, appliances[index].name, monthlyUnits(&appliances[index]));
     }
 }
 
 void detectWastage(void) {
     double total = totalMonthlyUnits();
-    int i, found = 0;
-
     if (applianceCount == 0 || total <= 0.0) {
         printf("\nNo consumption data available.\n");
         return;
     }
 
-    printf("\n========== HIGH CONSUMPTION ANALYSIS ==========\n");
-    printf("Total monthly consumption: %.2f units\n\n", total);
+    printf("\n--- High Consumption Analysis ---\n");
+    int found = 0;
 
-    for (i = 0; i < applianceCount; i++) {
-        double usage = monthlyUnits(&appliances[i]);
-        double share = (usage / total) * 100.0;
-
+    for (int i = 0; i < applianceCount; i++) {
+        double share = (monthlyUnits(&appliances[i]) / total) * 100.0;
         if (share >= 25.0) {
-            printf("ALERT: %s uses %.1f%% of total electricity.\n",
-                   appliances[i].name, share);
-            printf("       Review its daily usage and switch it off when not needed.\n");
+            printf("ALERT: %s consumes %.1f%% of total electricity.\n", appliances[i].name, share);
             found = 1;
         }
     }
@@ -353,146 +282,100 @@ void detectWastage(void) {
     if (!found) {
         printf("No single appliance accounts for 25%% or more of total usage.\n");
     }
-
-    printf("\nNote: This identifies high consumption, not a confirmed fault.\n");
 }
 
 void energySavingSuggestions(void) {
-    int i;
-
     if (applianceCount == 0) {
         printf("\nAdd appliances first to receive suggestions.\n");
         return;
     }
 
-    printf("\n========== ENERGY-SAVING SUGGESTIONS ==========\n");
-
-    for (i = 0; i < applianceCount; i++) {
-        double usage = monthlyUnits(&appliances[i]);
-        double saving = usage * 0.10; /* Example: reduce usage by 10%. */
-
+    printf("\n--- Energy-Saving Suggestions ---\n");
+    for (int i = 0; i < applianceCount; i++) {
+        double saving = monthlyUnits(&appliances[i]) * 0.10;
         printf("\n%s:\n", appliances[i].name);
-
         if (appliances[i].hoursPerDay >= 8.0) {
-            printf("- Review whether daily usage can be reduced.\n");
+            printf("- Consider reducing daily operational hours.\n");
         } else {
-            printf("- Switch off when not in use.\n");
+            printf("- Ensure it is switched off when not in use.\n");
         }
-
-        if (appliances[i].powerWatts >= 1000.0) {
-            printf("- Prefer an energy-efficient model where practical.\n");
-        }
-
-        printf("- A 10%% usage reduction could save about %.2f units/month.\n",
-               saving);
+        printf("- A 10%% usage reduction saves ~%.2f units/month.\n", saving);
     }
-
-    printf("\nSuggestions are general estimates, not guaranteed savings.\n");
 }
 
 void generateReport(void) {
-    int i;
-    double totalUnits, totalBill;
-
     if (applianceCount == 0) {
-        printf("\nNo data available. Add appliances first.\n");
+        printf("\nNo data available.\n");
         return;
     }
 
-    totalUnits = totalMonthlyUnits();
-    totalBill = calculateBill(totalUnits);
+    double totalUnits = totalMonthlyUnits();
+    double totalBill = calculateBill(totalUnits);
 
-    printf("\n");
-    printf("============================================================\n");
+    printf("\n============================================================\n");
     printf("             SMART ELECTRICITY ANALYSIS REPORT              \n");
     printf("============================================================\n");
-    printf("Number of appliance entries : %d\n", applianceCount);
-    printf("Daily electricity usage     : %.2f units\n", totalDailyUnits());
-    printf("Monthly electricity usage   : %.2f units\n", totalUnits);
-    printf("Estimated energy bill       : Rs. %.2f\n", totalBill);
+    printf("Total Appliances            : %d\n", applianceCount);
+    printf("Daily Usage                 : %.2f units\n", totalDailyUnits());
+    printf("Monthly Usage               : %.2f units\n", totalUnits);
+    printf("Estimated Bill              : Rs. %.2f\n", totalBill);
     printf("------------------------------------------------------------\n");
     printf("%-22s %12s %12s\n", "Appliance", "Units/month", "Share (%)");
     printf("------------------------------------------------------------\n");
 
-    for (i = 0; i < applianceCount; i++) {
+    for (int i = 0; i < applianceCount; i++) {
         double usage = monthlyUnits(&appliances[i]);
         double share = (totalUnits > 0.0) ? (usage / totalUnits) * 100.0 : 0.0;
-
-        printf("%-22.22s %12.2f %11.1f%%\n",
-               appliances[i].name, usage, share);
+        printf("%-22.22s %12.2f %11.1f%%\n", appliances[i].name, usage, share);
     }
-
-    printf("============================================================\n");
-    printf("Report generated successfully.\n");
     printf("============================================================\n");
 }
 
 void displayMenu(void) {
-    printf("\n");
-    printf("===============================================\n");
+    printf("\n===============================================\n");
     printf("       SMART ELECTRICITY CONSUMPTION ANALYZER  \n");
     printf("===============================================\n");
     printf("1. Add Appliance\n");
     printf("2. View Appliances\n");
     printf("3. Delete Appliance\n");
-    printf("4. Calculate Daily and Monthly Consumption\n");
-    printf("5. Estimate Monthly Electricity Bill\n");
-    printf("6. Rank Appliances by Consumption\n");
-    printf("7. Detect High Electricity Consumption\n");
-    printf("8. Get Energy-Saving Suggestions\n");
-    printf("9. Generate Complete Report\n");
+    printf("4. Show Consumption\n");
+    printf("5. Estimate Monthly Bill\n");
+    printf("6. Rank Appliances\n");
+    printf("7. Detect High Consumption\n");
+    printf("8. Energy-Saving Suggestions\n");
+    printf("9. Generate Report\n");
     printf("0. Save and Exit\n");
     printf("-----------------------------------------------\n");
 }
 
 int main(void) {
     int choice;
-
     loadData();
 
-    printf("\nWelcome to the Smart Electricity Consumption Analyzer!\n");
-    printf("%d appliance record(s) loaded.\n", applianceCount);
+    printf("\nWelcome to Smart Electricity Consumption Analyzer!\n");
+    printf("%d record(s) loaded.\n", applianceCount);
 
     do {
         displayMenu();
         choice = readInt("Enter your choice: ", 0, 9);
 
         switch (choice) {
-            case 1:
-                addAppliance();
-                break;
-            case 2:
-                viewAppliances();
-                break;
-            case 3:
-                deleteAppliance();
-                break;
-            case 4:
-                showConsumption();
-                break;
-            case 5:
-                estimateBill();
-                break;
-            case 6:
-                rankAppliances();
-                break;
-            case 7:
-                detectWastage();
-                break;
-            case 8:
-                energySavingSuggestions();
-                break;
-            case 9:
-                generateReport();
-                break;
+            case 1: addAppliance(); break;
+            case 2: viewAppliances(); break;
+            case 3: deleteAppliance(); break;
+            case 4: showConsumption(); break;
+            case 5: estimateBill(); break;
+            case 6: rankAppliances(); break;
+            case 7: detectWastage(); break;
+            case 8: energySavingSuggestions(); break;
+            case 9: generateReport(); break;
             case 0:
                 saveData();
-                printf("\nData saved. Thank you for using the analyzer!\n");
+                printf("\nData saved. Exiting program...\n");
                 break;
             default:
                 printf("Invalid choice.\n");
         }
-
     } while (choice != 0);
 
     return 0;
